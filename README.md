@@ -1,3 +1,5 @@
+
+## 自定义render 
 - jsx 是如何编译dom 节点的，jsx → 虚拟dom → js object → html
 
 - reactDom.createElememt（'#root', <App />）
@@ -242,3 +244,62 @@ ReactDom.createRoot(container).render(App);
 
 
   ```
+
+## fiber架构
+<img src='./imgs/image1.png' />
+
+### performFiberUnit
+
+``` jsx
+  const performFiberOfUnit = fiber => {
+  // 0. 如果没有dom，再创建
+  if (!fiber.dom) {
+    //1. 创建dom
+    const dom = createDom(fiber.type);
+    fiber.dom = dom;
+    fiber.parent.dom.append(dom);
+    //2. 给 dom 设置属性props
+    updateDomProps(dom, fiber.props);
+  }
+
+  //3. 找一下child 节点
+
+  initChild(fiber);
+
+  //4. 子节点找完，找兄弟节点
+  if (fiber.child) {
+    return fiber.child;
+  }
+
+  // 5，返回兄弟节点
+  if (fiber.sibling) {
+    return fiber.sibling;
+  }
+  //6 兄弟节点没有了，返回父节点
+
+  return fiber.parent.sibling;
+};
+   
+
+```
+
+### workLoop
+
+```jsx
+ const fiberLoop = deadline => {
+  //1. 创建dom
+  let shouldYield = false;
+
+  while (!shouldYield && nextFiberOfUnit) {
+    nextFiberOfUnit = performFiberOfUnit(nextFiberOfUnit);
+    console.log('111', deadline.timeRemaining());
+    if (deadline.timeRemaining() < 1) {
+      shouldYield = true;
+    }
+    requestIdleCallback(fiberLoop);
+  }
+};
+
+requestIdleCallback(fiberLoop);
+
+```
