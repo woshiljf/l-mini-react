@@ -100,8 +100,8 @@ const updateDomProps = (dom, props) => {
   });
 };
 
-const initChild = Fiber => {
-  const children = Fiber.props.children;
+const initChild = fiber => {
+  const children = fiber.props.children;
   let preChild = null;
 
   children.forEach((child, index) => {
@@ -109,13 +109,13 @@ const initChild = Fiber => {
       type: child.type,
       props: child.props,
       child: null,
-      parent: Fiber,
+      parent: fiber,
       sibling: null,
       dom: null,
     };
 
     if (index === 0) {
-      Fiber.child = newFiber;
+      fiber.child = newFiber;
     } else {
       preChild.sibling = newFiber;
     }
@@ -124,7 +124,7 @@ const initChild = Fiber => {
   });
 };
 
-const performFiberOfUnit = fiber => {
+const performWorkUntil = fiber => {
   // 0. 如果没有dom，再创建
   if (!fiber.dom) {
     //1. 创建dom
@@ -158,7 +158,7 @@ const fiberLoop = deadline => {
   let shouldYield = false;
 
   while (!shouldYield && nextFiberOfUnit) {
-    nextFiberOfUnit = performFiberOfUnit(nextFiberOfUnit);
+    nextFiberOfUnit = performWorkUntil(nextFiberOfUnit);
     console.log('111', deadline.timeRemaining());
     if (deadline.timeRemaining() < 1) {
       shouldYield = true;

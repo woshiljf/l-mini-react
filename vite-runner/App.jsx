@@ -1,12 +1,15 @@
 
 import React from './core/React.js';
 
-const App = React.createElement(
-  'div',
-  { id: 'app', class: 'app' },
-  '22222222222222222244'
-);
-
+const App = <div>
+   <div>2323</div>
+   <div>333333</div>
+  <div>
+    <div>31</div>
+    <div>32</div>
+    <div>33</div>
+   </div>
+</div>
 
 // function app() {
 //   return /*#__PURE__*/ React.createElement(
