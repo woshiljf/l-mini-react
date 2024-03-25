@@ -1,38 +1,28 @@
-
 import React from './core/React.js';
 
-const App = <div>
-   <div>2323</div>
-   <div>333333</div>
-  <div>
-    <div>31</div>
-    <div>32</div>
-    <div>33</div>
-   </div>
-</div>
+function Count1({ num }) {
+  return <div>num: {num}</div>;
+}
 
-// function app() {
-//   return /*#__PURE__*/ React.createElement(
-//     "div",
-//     {
-//       id: "3242",
-//       class: "3"
-//     },
-//     /*#__PURE__*/ React.createElement(
-//       "div",
-//       {
-//         id: "3242"
-//       },
-//       /*#__PURE__*/ React.createElement(
-//         "div",
-//         null,
-//         "            ",
-//         /*#__PURE__*/ React.createElement("div", null, "3333")
-//       )
-//     )
-//   );
-// }
+function CountContainer({ num }) {
+  return <Count1 num={num}>2</Count1>;
+}
 
+function App() {
+  return (
+    <div>
+      mini-react
+      <CountContainer num={1000}></CountContainer>
+      <Count1 num={5000}></Count1>
+    </div>
+  );
+}
 
+// const App = (
+//   <div>
+//     我是大海狗
+//     <CountContainer></CountContainer>
+//   </div>
+// );
 
 export default App;

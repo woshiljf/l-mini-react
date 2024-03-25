@@ -1,5 +1,7 @@
+import React from './core/React.js';
+
 import ReactDom from './core/ReactDom.js';
 import App from './App.jsx';
 const container = document.getElementById('root');
 
-ReactDom.createRoot(container).render(App);
+ReactDom.createRoot(container).render(<App></App>);

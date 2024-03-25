@@ -15,7 +15,7 @@ const createElement = (type, props, ...children) => {
     props: {
       ...props,
       children: children.map(child => {
-        if (typeof child === 'string') {
+        if (typeof child === 'string' || typeof child === 'number') {
           return createTextNode(child);
         }
         return child;
@@ -75,7 +75,7 @@ const createElement = (type, props, ...children) => {
 //   container.append(dom);
 // };
 let nextFiberOfUnit = null;
-
+let root = null;
 const render = (el, container) => {
   nextFiberOfUnit = {
     dom: container,
@@ -83,7 +83,8 @@ const render = (el, container) => {
       children: [el],
     },
   };
-  performFiberOfUnit(nextFiberOfUnit);
+  root = nextFiberOfUnit;
+  performWorkUnit(nextFiberOfUnit);
 };
 
 const createDom = type => {
@@ -100,8 +101,7 @@ const updateDomProps = (dom, props) => {
   });
 };
 
-const initChild = fiber => {
-  const children = fiber.props.children;
+const initChild = (fiber, children) => {
   let preChild = null;
 
   children.forEach((child, index) => {
@@ -124,20 +124,25 @@ const initChild = fiber => {
   });
 };
 
-const performWorkUntil = fiber => {
+const performWorkUnit = fiber => {
   // 0. 如果没有dom，再创建
-  if (!fiber.dom) {
+  const isFunctionComponent = typeof fiber.type === 'function';
+
+  if (!fiber.dom && !isFunctionComponent) {
     //1. 创建dom
+
     const dom = createDom(fiber.type);
     fiber.dom = dom;
-    fiber.parent.dom.append(dom);
+    // fiber.parent.dom.append(dom);
     //2. 给 dom 设置属性props
     updateDomProps(dom, fiber.props);
   }
 
   //3. 找一下child 节点
-
-  initChild(fiber);
+  const children = isFunctionComponent
+    ? [fiber.type(fiber.props)]
+    : fiber.props.children;
+  initChild(fiber, children);
 
   //4. 子节点找完，找兄弟节点
   if (fiber.child) {
@@ -145,24 +150,61 @@ const performWorkUntil = fiber => {
   }
 
   // 5，返回兄弟节点
-  if (fiber.sibling) {
-    return fiber.sibling;
-  }
-  //6 兄弟节点没有了，返回父节点
+  // if (fiber.sibling) {
+  //   return fiber.sibling;
+  // }
+  //6 兄弟节点没有了，返回父节点的兄弟节点
 
-  return fiber.parent.sibling;
+  let nextFiber = fiber;
+
+  while (nextFiber) {
+    if (nextFiber.sibling) return nextFiber.sibling;
+
+    nextFiber = nextFiber.parent;
+  }
+
+  // return fiber.parent.sibling;
 };
 
+function commitRoot() {
+  commitWork(root.child);
+  root = null;
+}
+
+function commitWork(fiber) {
+  if (!fiber) return;
+
+  let fiberParent = fiber.parent;
+
+  while (!fiberParent.dom) {
+    fiberParent = fiberParent.parent;
+  }
+
+  if (fiber.dom) {
+    fiberParent.dom.append(fiber.dom);
+  }
+
+  commitWork(fiber.child);
+  commitWork(fiber.sibling);
+}
 const fiberLoop = deadline => {
   //1. 创建dom
   let shouldYield = false;
 
   while (!shouldYield && nextFiberOfUnit) {
-    nextFiberOfUnit = performWorkUntil(nextFiberOfUnit);
-    console.log('111', deadline.timeRemaining());
+    nextFiberOfUnit = performWorkUnit(nextFiberOfUnit);
+
+    console.log('root', root);
     if (deadline.timeRemaining() < 1) {
       shouldYield = true;
     }
+
+    // 如果nextFiberUnit 没有值的时候，说明已经到了之后一个节点了
+
+    if (!nextFiberOfUnit && root) {
+      commitRoot();
+    }
+
     requestIdleCallback(fiberLoop);
   }
 };
