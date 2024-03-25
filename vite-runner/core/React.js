@@ -124,25 +124,34 @@ const initChild = (fiber, children) => {
   });
 };
 
-const performWorkUnit = fiber => {
-  // 0. 如果没有dom，再创建
-  const isFunctionComponent = typeof fiber.type === 'function';
+const updateFunctionComponent = fiber => {
+  initChild(fiber, [fiber.type(fiber.props)]);
+};
 
-  if (!fiber.dom && !isFunctionComponent) {
-    //1. 创建dom
-
+const updateHostComponent = fiber => {
+  if (!fiber.dom) {
     const dom = createDom(fiber.type);
     fiber.dom = dom;
     // fiber.parent.dom.append(dom);
     //2. 给 dom 设置属性props
     updateDomProps(dom, fiber.props);
   }
+  initChild(fiber, fiber.props.children);
+};
 
-  //3. 找一下child 节点
-  const children = isFunctionComponent
-    ? [fiber.type(fiber.props)]
-    : fiber.props.children;
-  initChild(fiber, children);
+const performWorkUnit = fiber => {
+  // 0. 如果没有dom，再创建
+  const isFunctionComponent = typeof fiber.type === 'function';
+
+  if (isFunctionComponent) {
+    //1. 创建dom
+    updateFunctionComponent(fiber);
+  }
+
+  if (!isFunctionComponent) {
+    //1. 创建dom
+    updateHostComponent(fiber);
+  }
 
   //4. 子节点找完，找兄弟节点
   if (fiber.child) {
