@@ -168,11 +168,10 @@ const performWorkUnit = fiber => {
 
   while (nextFiber) {
     if (nextFiber.sibling) return nextFiber.sibling;
-
     nextFiber = nextFiber.parent;
   }
 
-  // return fiber.parent.sibling;
+  return fiber.parent.sibling;
 };
 
 function commitRoot() {
@@ -203,7 +202,6 @@ const fiberLoop = deadline => {
   while (!shouldYield && nextFiberOfUnit) {
     nextFiberOfUnit = performWorkUnit(nextFiberOfUnit);
 
-    console.log('root', root);
     if (deadline.timeRemaining() < 1) {
       shouldYield = true;
     }

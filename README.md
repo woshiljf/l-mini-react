@@ -292,7 +292,6 @@ ReactDom.createRoot(container).render(App);
 
   while (!shouldYield && nextFiberOfUnit) {
     nextFiberOfUnit = performFiberOfUnit(nextFiberOfUnit);
-    console.log('111', deadline.timeRemaining());
     if (deadline.timeRemaining() < 1) {
       shouldYield = true;
     }

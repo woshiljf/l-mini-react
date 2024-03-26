@@ -5,15 +5,22 @@ function Count1({ num }) {
 }
 
 function CountContainer({ num }) {
-  return <Count1 num={num}>2</Count1>;
+  return <div>2</div>;
 }
 
 function App() {
   return (
-    <div>
-      mini-react
-      <CountContainer num={1000}></CountContainer>
-      <Count1 num={5000}></Count1>
+    <div id="llll">
+      我是大海狗
+      <div>
+        <div>
+          1
+          <div>
+            2<div>3</div>
+          </div>
+        </div>
+        <div>44</div>
+      </div>
     </div>
   );
 }
@@ -21,7 +28,7 @@ function App() {
 // const App = (
 //   <div>
 //     我是大海狗
-//     <CountContainer></CountContainer>
+//     <CountContainer num={142342}></CountContainer>
 //   </div>
 // );
 
