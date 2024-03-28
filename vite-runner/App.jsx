@@ -1,26 +1,32 @@
 import React from './core/React.js';
 
-function Count1({ num }) {
-  return <div>num: {num}</div>;
-}
+// function Count1({ num }) {
+//   return <div>num: {num}</div>;
+// }
 
+let count = 100;
+let props = { id: 'xxxx', b: 'yyy' };
 function CountContainer({ num }) {
-  return <div>2</div>;
+  const handleClick = () => {
+    count++;
+    console.log('3423');
+    props = {};
+    React.update();
+  };
+
+  return (
+    <div {...props}>
+      {count}
+      <button onClick={handleClick}>点击我一下</button>
+    </div>
+  );
 }
 
 function App() {
   return (
     <div id="llll">
-      我是大海狗
-      <div>
-        <div>
-          1
-          <div>
-            2<div>3</div>
-          </div>
-        </div>
-        <div>44</div>
-      </div>
+      我是大海狗{count}
+      <CountContainer num={1000000}></CountContainer>
     </div>
   );
 }
