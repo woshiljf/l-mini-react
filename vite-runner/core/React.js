@@ -80,6 +80,8 @@ let wipRoot = null;
 // 新的dom 对象
 
 let currentRoot = null;
+let wipFiber = null;
+let deleteList = [];
 
 const render = (el, container) => {
   nextFiberOfUnit = {
@@ -143,6 +145,7 @@ const reconcileChild = (fiber, children) => {
   let newFiber = null;
   children.forEach((child, index) => {
     const isSameType = oldFiber && oldFiber.type === child.type;
+
     // 如果是相同的，表示更新
     if (isSameType) {
       // 如果类型是相同的，就走更新的逻辑
@@ -157,15 +160,21 @@ const reconcileChild = (fiber, children) => {
         alternate: oldFiber,
       };
     } else {
-      newFiber = {
-        type: child.type,
-        props: child.props,
-        child: null,
-        parent: fiber,
-        sibling: null,
-        dom: null,
-        effectTag: 'placement',
-      };
+      if (child) {
+        newFiber = {
+          type: child.type,
+          props: child.props,
+          child: null,
+          parent: fiber,
+          sibling: null,
+          dom: null,
+          effectTag: 'placement',
+        };
+      }
+
+      if (oldFiber) {
+        deleteList.push(oldFiber);
+      }
     }
 
     if (oldFiber) {
@@ -178,11 +187,20 @@ const reconcileChild = (fiber, children) => {
       preChild.sibling = newFiber;
     }
 
-    preChild = newFiber;
+    if (newFiber) {
+      preChild = newFiber;
+    }
   });
+
+  while (oldFiber) {
+    deleteList.push(oldFiber);
+    oldFiber = oldFiber.sibling;
+  }
 };
 
 const updateFunctionComponent = fiber => {
+  wipFiber = fiber;
+
   reconcileChild(fiber, [fiber.type(fiber.props)]);
 };
 
@@ -232,10 +250,27 @@ const performWorkUnit = fiber => {
   return fiber.parent.sibling;
 };
 
+function commitDeletion(fiber) {
+  if (fiber.dom) {
+    let fiberParent = fiber.parent;
+
+    while (!fiberParent.dom) {
+      fiberParent = fiberParent.parent;
+    }
+
+    fiberParent?.dom?.removeChild(fiber.dom);
+  } else {
+    commitDeletion(fiber.child);
+  }
+}
+
 function commitRoot() {
+  const newDeleteList = deleteList.filter(Boolean);
+  newDeleteList.forEach(commitDeletion);
   commitWork(wipRoot.child);
   currentRoot = wipRoot;
   wipRoot = null;
+  deleteList = [];
 }
 
 function commitWork(fiber) {
@@ -248,7 +283,6 @@ function commitWork(fiber) {
   }
 
   if (fiber.effectTag === 'update') {
-    console.log('fiber', fiber);
     updateDomProps(fiber.dom, fiber.props, fiber.alternate?.props);
   } else if (fiber.effectTag === 'placement') {
     if (fiber.dom) {
@@ -262,10 +296,12 @@ function commitWork(fiber) {
 const fiberLoop = deadline => {
   //1. 创建dom
   let shouldYield = false;
-
   while (!shouldYield && nextFiberOfUnit) {
     nextFiberOfUnit = performWorkUnit(nextFiberOfUnit);
 
+    if (wipRoot?.sibling?.type === nextFiberOfUnit?.type) {
+      nextFiberOfUnit = null;
+    }
     if (deadline.timeRemaining() < 1) {
       shouldYield = true;
     }
@@ -274,22 +310,35 @@ const fiberLoop = deadline => {
     if (!nextFiberOfUnit && wipRoot) {
       commitRoot();
     }
-
-    requestIdleCallback(fiberLoop);
   }
+  requestIdleCallback(fiberLoop);
 };
 
 requestIdleCallback(fiberLoop);
 
+// const update = () => {
+//   let currentFiber = wipFiber;
+
+//   return () => {
+//     wipRoot = {
+//       ...currentFiber,
+//       alternate: currentFiber,
+//     };
+//     nextFiberOfUnit = wipRoot;
+//   };
+// };
+
 // 第一步是，当我们改了某个属性之后，需要手动再再次调用update 进行更新比较
 const update = () => {
-  nextFiberOfUnit = {
-    dom: currentRoot?.dom,
-    props: currentRoot.props,
-    alternate: currentRoot,
+  let currentFiber = wipFiber;
+
+  return () => {
+    wipRoot = {
+      ...currentFiber,
+      alternate: currentFiber,
+    };
+    nextFiberOfUnit = wipRoot;
   };
-  wipRoot = nextFiberOfUnit;
-  requestIdleCallback(fiberLoop);
 };
 
 const React = {
