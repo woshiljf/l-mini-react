@@ -6,14 +6,32 @@ function Foo() {
   const [bar, setBar] = React.useState('bar');
   const handleClick = () => {
     setCount(value => value + 100);
-    setCount(value => value + 100);
-    setCount(value => value + 100);
-    setCount(value => value + 100);
-    setCount(value => value + 100);
-    setCount(value => value + 100);
 
     setBar('xxxxxxxxxx');
   };
+
+  React.useEffect(() => {
+    console.log('1');
+    return () => {
+      console.log('1---clearUp');
+    };
+  }, [3]);
+
+  React.useEffect(() => {
+    console.log('2');
+
+    return () => {
+      console.log('2---clearUp');
+    };
+  }, [1]);
+
+  React.useEffect(() => {
+    console.log('count', count);
+    return () => {
+      console.log('count---clearUp');
+    };
+  }, [count]);
+
   return (
     <div>
       {count}

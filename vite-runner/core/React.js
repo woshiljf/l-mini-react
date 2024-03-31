@@ -202,6 +202,7 @@ const updateFunctionComponent = fiber => {
   wipFiber = fiber;
   currentHookIndex = 0;
   stateHooks = [];
+  effectHooks = [];
   reconcileChild(fiber, [fiber.type(fiber.props)]);
 };
 
@@ -269,9 +270,61 @@ function commitRoot() {
   const newDeleteList = deleteList.filter(Boolean);
   newDeleteList.forEach(commitDeletion);
   commitWork(wipRoot.child);
+  commitEffectHook();
   currentRoot = wipRoot;
   wipRoot = null;
   deleteList = [];
+}
+
+function commitEffectHook() {
+  function run(fiber) {
+    if (!fiber) return;
+
+    if (!fiber.alternate) {
+      const effectHooks = fiber?.effectHooks;
+
+      effectHooks?.forEach(hook => {
+        hook.clearUp = hook.callback();
+      });
+    } else {
+      // update
+      const effectHooks = fiber?.effectHooks || [];
+
+      effectHooks.forEach((newHook, index) => {
+        if (newHook.deps.length > 0) {
+          const oldEffectHook = fiber.alternate.effectHooks[index];
+
+          const needUpdate = oldEffectHook?.deps?.some((oldDep, i) => {
+            return oldDep !== newHook.deps[i];
+          });
+
+          needUpdate && (newHook.clearUp = newHook?.callback());
+        }
+      });
+    }
+
+    run(fiber.child);
+    run(fiber.sibling);
+  }
+
+  function runClearUp(fiber) {
+    if (!fiber) return;
+
+    if (fiber.alternate) {
+      const effectHooks = fiber.alternate?.effectHooks || [];
+
+      effectHooks.forEach(hook => {
+        if (hook.deps.length > 0) {
+          hook.clearUp && hook.clearUp();
+        }
+      });
+    }
+    runClearUp(fiber.child);
+    runClearUp(fiber.sibling);
+  }
+
+  runClearUp(wipRoot);
+  run(wipRoot);
 }
 
 function commitWork(fiber) {
@@ -403,14 +456,30 @@ function useState(initValue) {
 }
 
 /**
- * 实现
+ * 实现useEffect
+ *
+ * 1.
  */
+
+let effectHooks;
+
+function useEffect(callback, deps = []) {
+  let useEffectHook = {
+    callback,
+    deps,
+    clearUp: undefined,
+  };
+
+  effectHooks.push(useEffectHook);
+  wipFiber.effectHooks = effectHooks;
+}
 
 const React = {
   render,
   createElement,
   update,
   useState,
+  useEffect,
 };
 
 // function hello() {
