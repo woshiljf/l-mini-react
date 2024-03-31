@@ -200,7 +200,8 @@ const reconcileChild = (fiber, children) => {
 
 const updateFunctionComponent = fiber => {
   wipFiber = fiber;
-
+  currentHookIndex = 0;
+  stateHooks = [];
   reconcileChild(fiber, [fiber.type(fiber.props)]);
 };
 
@@ -341,10 +342,75 @@ const update = () => {
   };
 };
 
+/**
+ * 实现useState
+ *
+ * 1. 实现一个useState，
+ * 2. 如何存储之前的state，当函数组件在更新的时候，能拿到渲染之前的值
+ * 3. 如何解决多个state 同时调用的情况
+ * 4. 可以使用hooks ，和索引值去解决
+ * 5. 如何解决state 批量更新的问题
+ *
+ *
+ *
+ */
+
+let currentHookIndex;
+let stateHooks;
+function useState(initValue) {
+  let currentFiber = wipFiber;
+
+  const oldHook = currentFiber?.alternate?.stateHooks[currentHookIndex];
+
+  let stateHook = {
+    state: oldHook ? oldHook.state : initValue,
+    queue: oldHook ? oldHook.queue : [],
+  };
+
+  stateHook.queue.forEach(action => {
+    stateHook.state = action(stateHook.state);
+  });
+
+  stateHook.queue = [];
+
+  currentHookIndex++;
+
+  stateHooks.push(stateHook);
+
+  currentFiber.stateHooks = stateHooks;
+
+  function setState(action) {
+    // stateHook.state = action(stateHook.state);
+
+    const eagerState =
+      typeof action === 'function' ? action(stateHook.state) : () => action;
+
+    // 如果更新前后的值是相等的，直接返回，减少没必要的更新；
+    if (eagerState === stateHook.state) {
+      return;
+    }
+
+    stateHook.queue.push(typeof action === 'function' ? action : () => action);
+
+    wipRoot = {
+      ...currentFiber,
+      alternate: currentFiber,
+    };
+    nextFiberOfUnit = wipRoot;
+  }
+
+  return [stateHook.state, setState];
+}
+
+/**
+ * 实现
+ */
+
 const React = {
   render,
   createElement,
   update,
+  useState,
 };
 
 // function hello() {

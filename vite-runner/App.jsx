@@ -1,22 +1,23 @@
 import React from './core/React.js';
 
-// function Count1({ num }) {
-//   return <div>num: {num}</div>;
-// }
-
-let count = 100;
-let showBar = false;
-let showDiv = false;
-let props = { id: 'xxxx', b: 'yyy' };
-
 function Foo() {
-  const update = React.update();
+  // const update = React.update();
+  const [count, setCount] = React.useState(100);
+  const [bar, setBar] = React.useState('bar');
   const handleClick = () => {
-    update();
+    setCount(value => value + 100);
+    setCount(value => value + 100);
+    setCount(value => value + 100);
+    setCount(value => value + 100);
+    setCount(value => value + 100);
+    setCount(value => value + 100);
+
+    setBar('xxxxxxxxxx');
   };
-  console.log('foo');
   return (
     <div>
+      {count}
+      {bar}
       <button onClick={handleClick}>我是Foo</button>
     </div>
   );
@@ -36,32 +37,12 @@ function Bar() {
     </div>
   );
 }
-function CountContainer({ num }) {
-  const handleClick = () => {
-    count++;
-    console.log('3423');
-    props = {};
-    showBar = !showBar;
-    showDiv = !showDiv;
-    React.update();
-  };
-
-  return (
-    <div {...props}>
-      {count}
-      {showDiv && <div>33333</div>}
-
-      <button onClick={handleClick}>点击我一下{num}</button>
-    </div>
-  );
-}
 
 function App() {
   const update = React.update();
   const handleClick = () => {
     update();
   };
-  console.log('app');
 
   return (
     <div id="llll">
